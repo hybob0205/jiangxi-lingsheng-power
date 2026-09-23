@@ -165,14 +165,16 @@ function setupBackgroundMusic() {
     const expanded = force ?? panel.hidden;
     panel.hidden = !expanded;
     orb.setAttribute('aria-expanded', String(expanded));
+    orb.setAttribute('aria-label', expanded ? '收起音乐控制' : '展开音乐控制并播放');
     if (!expanded) orb.focus();
   }
   async function togglePlayback() {
     if (audio.paused) await playAudio(); else pauseAudio();
   }
   orb.addEventListener('click', async () => {
-    togglePanel(true);
-    if (audio.paused) await playAudio();
+    const expanded = !panel.hidden;
+    togglePanel(!expanded);
+    if (!expanded && audio.paused) await playAudio();
   });
   close.addEventListener('click', () => togglePanel(false));
   play.addEventListener('click', togglePlayback);

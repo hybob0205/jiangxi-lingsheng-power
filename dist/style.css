@@ -756,7 +756,8 @@ p { text-wrap: pretty; }
 .music-orb:hover { transform: translateY(-2px); background: #2c5362; box-shadow: 0 11px 30px rgb(16 35 51 / 25%); }
 .music-orb-icon { position: relative; z-index: 1; font-size: 25px; line-height: 1; }
 .music-orb-pulse { position: absolute; inset: -5px; border: 1px solid rgb(217 92 48 / 48%); border-radius: 50%; opacity: 0; }
-.music-control.is-playing .music-orb { background: #d95c30; }
+.music-control.is-playing .music-orb { background: #d95c30; animation: music-spin 5s linear infinite; }
+@keyframes music-spin { to { transform: rotate(360deg); } }
 .music-control.is-playing .music-orb-pulse { animation: music-pulse 2.4s ease-out infinite; }
 @keyframes music-pulse { 0% { transform: scale(.86); opacity: .65; } 100% { transform: scale(1.18); opacity: 0; } }
 .music-panel {
@@ -789,5 +790,6 @@ p { text-wrap: pretty; }
   .music-orb { width: 54px; height: 54px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .music-orb, .music-control.is-playing .music-orb, .music-control.is-playing .music-orb-pulse { animation: none; }
   .music-toggle { transition: none; }
 }
