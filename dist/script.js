@@ -1,17 +1,64 @@
-const toggle = document.querySelector('.menu-toggle');
-const nav = document.querySelector('.topbar nav');
-
-if (toggle && nav) {
+function setupNavigationMenu() {
+  const toggle = document.querySelector('.menu-toggle');
+  const nav = document.querySelector('.topbar nav');
+  if (!toggle || !nav) return;
   toggle.addEventListener('click', () => {
     const open = nav.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(open));
   });
-
   nav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => {
     nav.classList.remove('open');
     toggle.setAttribute('aria-expanded', 'false');
   }));
 }
+setupNavigationMenu();
+
+let pageRequest = 0;
+async function navigateToPage(url, addHistory = true) {
+  const requestId = ++pageRequest;
+  try {
+    const response = await fetch(url.href, { headers: { Accept: 'text/html' } });
+    if (!response.ok) throw new Error('Page request failed');
+    const markup = await response.text();
+    if (requestId !== pageRequest) return;
+    const nextDocument = new DOMParser().parseFromString(markup, 'text/html');
+    const nextHeader = nextDocument.querySelector('.topbar');
+    const nextMain = nextDocument.querySelector('main');
+    const nextFooter = nextDocument.querySelector('footer');
+    const currentHeader = document.querySelector('.topbar');
+    const currentMain = document.querySelector('main');
+    const currentFooter = document.querySelector('footer');
+    if (!nextHeader || !nextMain || !currentHeader || !currentMain) throw new Error('Page structure missing');
+
+    if (window.ScrollTrigger) window.ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+    currentHeader.replaceWith(nextHeader);
+    currentMain.replaceWith(nextMain);
+    if (nextFooter && currentFooter) currentFooter.replaceWith(nextFooter);
+    document.title = nextDocument.title;
+    if (addHistory) history.pushState({ sitePage: true }, '', url.href);
+    setupNavigationMenu();
+    window.scrollTo(0, 0);
+    if (window.gsap && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.gsap.fromTo(nextMain, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.32, ease: 'power2.out' });
+    }
+  } catch {
+    window.location.href = url.href;
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const link = event.target.closest('a[href]');
+  if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  if (link.target || link.hasAttribute('download')) return;
+  const url = new URL(link.href, window.location.href);
+  if (url.origin !== window.location.origin || !/\.html$/i.test(url.pathname)) return;
+  if (url.pathname === window.location.pathname && url.hash) return;
+  if (url.pathname === window.location.pathname && !url.hash) return;
+  event.preventDefault();
+  navigateToPage(url);
+});
+history.scrollRestoration = 'manual';
+window.addEventListener('popstate', () => navigateToPage(new URL(window.location.href), false));
 
 const loadScript = (src) => new Promise((resolve, reject) => {
   const script = document.createElement('script');
